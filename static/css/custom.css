@@ -1,0 +1,205 @@
+/* Custom styles beyond Bootstrap */
+
+/* Theme toggle styling */
+.theme-toggle {
+    margin-top: 5px;
+}
+
+.theme-toggle i {
+    font-size: 18px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle i.active {
+    opacity: 1;
+}
+
+#theme-icon-light {
+    color: #ffc107;
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+    opacity: 0.5;
+}
+
+#theme-icon-light.active {
+    opacity: 1;
+}
+
+#theme-icon-dark {
+    color: #0d6efd;
+    text-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+    opacity: 0.5;
+}
+
+#theme-icon-dark.active {
+    opacity: 1;
+}
+
+/* Switch customization for theme toggle */
+.theme-toggle .form-switch .form-check-input {
+    width: 40px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.theme-toggle .form-switch .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Light theme specific adjustments */
+html[data-bs-theme="light"] {
+    --text-color: #212529;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    --link-color: #0d6efd;
+    --link-hover-color: #0a58ca;
+}
+
+html[data-bs-theme="light"] .bg-dark {
+    background-color: #f8f9fa !important;
+}
+
+html[data-bs-theme="light"] .navbar-dark {
+    background-color: #f8f9fa !important;
+}
+
+html[data-bs-theme="light"] .navbar-dark .navbar-brand,
+html[data-bs-theme="light"] .navbar-dark .nav-link {
+    color: #212529 !important;
+}
+
+html[data-bs-theme="light"] .navbar-dark .nav-link.active {
+    color: #0d6efd !important;
+    font-weight: bold;
+}
+
+html[data-bs-theme="light"] .footer {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
+html[data-bs-theme="light"] .footer .text-light {
+    color: #212529 !important;
+}
+
+html[data-bs-theme="light"] .card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+}
+
+html[data-bs-theme="light"] .card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Data visualization themes */
+html[data-bs-theme="light"] .chart-container canvas {
+    background-color: #fff !important;
+}
+
+html[data-bs-theme="dark"] .chart-container canvas {
+    background-color: #343a40 !important;
+}
+
+/* Card styles */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.border-left-info {
+    border-left: 0.25rem solid var(--bs-info) !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid var(--bs-warning) !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid var(--bs-success) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom switch styling - larger switches for better visibility */
+.form-switch .form-check-input {
+    height: 1.5em;
+    margin-top: 0.2em;
+}
+
+/* Footer fixes */
+.footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Activity list item hover */
+.activity-list .list-group-item {
+    transition: background-color 0.2s ease;
+}
+
+.activity-list .list-group-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Button hover animations */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Page transitions */
+.container {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .suggestion-card {
+        margin-bottom: 1rem;
+    }
+    
+    .app-usage-chart {
+        height: 250px;
+    }
+}

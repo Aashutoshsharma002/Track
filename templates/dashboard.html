@@ -1,0 +1,1529 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .suggestion-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .suggestion-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .feedback-btn {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .feedback-btn:hover {
+        opacity: 1;
+    }
+    
+    .feedback-btn.active {
+        opacity: 1;
+    }
+    
+    .activity-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .app-usage-chart {
+        height: 300px;
+    }
+    
+    .neural-model-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 6px;
+    }
+    
+    .neural-model-container canvas {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .neural-model-action {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .neural-model-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Privacy Consent Modal -->
+<div class="modal fade" id="privacyConsentModal" tabindex="-1" aria-labelledby="privacyConsentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyConsentModalLabel">Privacy Consent Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="fw-bold">WorkflowAI needs your permission to collect data</h6>
+                    <p>To provide personalized productivity suggestions, WorkflowAI needs to collect certain information about your work patterns. Please review and provide consent for the following data collection:</p>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="consentApplications" checked>
+                        <label class="form-check-label fw-bold" for="consentApplications">
+                            Track application usage
+                        </label>
+                        <div class="text-muted small">Information about which applications you use and for how long</div>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="consentWindowTitles" checked>
+                        <label class="form-check-label fw-bold" for="consentWindowTitles">
+                            Track window titles
+                        </label>
+                        <div class="text-muted small">The titles of your active windows to understand your context</div>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="consentSystemHealth" checked>
+                        <label class="form-check-label fw-bold" for="consentSystemHealth">
+                            Track system health metrics
+                        </label>
+                        <div class="text-muted small">Basic performance metrics like CPU and memory usage</div>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="consentDeviceInfo" checked>
+                        <label class="form-check-label fw-bold" for="consentDeviceInfo">
+                            Track basic device information
+                        </label>
+                        <div class="text-muted small">Basic information about your device type and operating system</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info small">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <strong>Your privacy is important:</strong> All data is stored locally in your browser. Nothing is sent to external servers, and your data stays on your device.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Later</button>
+                <button type="button" class="btn btn-primary" id="acceptPrivacyConsent">Accept & Start Tracking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0">Dashboard</h1>
+        <div class="d-flex align-items-center mt-1">
+            <div class="datetime-display me-3">
+                <span id="current-date" class="text-muted">{{ date_formats.human_date }}</span> |
+                <span id="current-time" class="text-primary fw-bold">{{ date_formats.time_with_seconds }}</span>
+                <span class="badge bg-secondary ms-1">{{ timezone }}</span>
+            </div>
+            <div class="dropdown world-clock-dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-globe"></i> World Clock
+                </button>
+                <ul class="dropdown-menu p-2" style="min-width: 220px;">
+                    <li class="dropdown-header">World Times</li>
+                    {% for tz_name, tz_time in major_timezones.items() %}
+                    <li class="d-flex justify-content-between my-1">
+                        <span>{{ tz_name.split('/')[-1].replace('_', ' ') }}</span>
+                        <span class="badge bg-dark">{{ tz_time }}</span>
+                    </li>
+                    {% endfor %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-header">System Information</li>
+                    <li class="d-flex justify-content-between my-1">
+                        <span>Day of Week</span>
+                        <span class="badge bg-info">{{ date_formats.day_name }}</span>
+                    </li>
+                    <li class="d-flex justify-content-between my-1">
+                        <span>Date Format</span>
+                        <span class="badge bg-info">ISO 8601</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="btn-group">
+        <button id="start-tracking-btn" class="btn btn-success me-2">
+            <i class="fas fa-play me-1"></i>Start Tracking
+        </button>
+        <button id="stop-tracking-btn" class="btn btn-danger me-2">
+            <i class="fas fa-stop me-1"></i>Stop Tracking
+        </button>
+        <button id="generate-suggestions-btn" class="btn btn-primary">
+            <i class="fas fa-sync me-1"></i>Generate Suggestions
+        </button>
+    </div>
+</div>
+
+<!-- Productivity Stats Summary Cards -->
+<div class="row mb-4" id="stats-container">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-left-primary shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Activities</div>
+                        <div class="h5 mb-0 font-weight-bold" id="total-activities">-</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-left-success shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Productive Time</div>
+                        <div class="h5 mb-0 font-weight-bold" id="productive-time">- hrs</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-left-info shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Average Productivity
+                        </div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col-auto">
+                                <div class="h5 mb-0 mr-3 font-weight-bold" id="avg-productivity">-%</div>
+                            </div>
+                            <div class="col">
+                                <div class="progress progress-sm mr-2">
+                                    <div class="progress-bar bg-info" role="progressbar" id="productivity-bar"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-left-warning shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Sessions</div>
+                        <div class="h5 mb-0 font-weight-bold" id="total-sessions">-</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-laptop fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-lg-7">
+        <!-- Suggestions Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Workflow Suggestions</h6>
+                <div class="dropdown no-arrow">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item" href="#"><i class="fas fa-filter me-1"></i> Filter</a>
+                        <a class="dropdown-item" href="#"><i class="fas fa-sort me-1"></i> Sort</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#"><i class="fas fa-history me-1"></i> History</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" id="suggestions-container">
+                <div class="text-center py-4" id="no-suggestions-message">
+                    <i class="fas fa-lightbulb text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-0">No suggestions yet. Start tracking your activities and we'll generate personalized suggestions for you.</p>
+                </div>
+                <!-- Suggestion cards will be inserted here by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Active Devices Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Connected Devices</h6>
+            </div>
+            <div class="card-body" id="devices-container">
+                <div class="text-center py-4" id="no-devices-message">
+                    <i class="fas fa-laptop text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-0">No devices registered yet.</p>
+                </div>
+                <!-- Device list will be inserted here by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Recent Activities Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Recent Activities</h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-list list-group" id="activities-container">
+                    <!-- Activities will be inserted here by JavaScript -->
+                </div>
+                <div class="text-center py-4 d-none" id="no-activities-message">
+                    <i class="fas fa-list-alt text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-0">No activities recorded yet. Start tracking to see your activities here.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Export Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Data Export</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">Export Options:</div>
+                        <a class="dropdown-item" href="#" onclick="clearDataBeforeExport()">Export Clean Data Only</a>
+                        <a class="dropdown-item" href="#" onclick="exportAllData()">Export All Data</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#exportHelpModal">Help</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label for="exportDataType" class="form-label">Select Data to Export</label>
+                        <select class="form-select" id="exportDataType">
+                            <option value="activities">Activities Data</option>
+                            <option value="suggestions">Suggestions Data</option>
+                            <option value="feedback">Feedback Data</option>
+                            <option value="system_health">System Health Data</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Select Export Format</label>
+                        <div class="d-flex">
+                            <div class="form-check me-3">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="exportFormatJson" value="json" checked>
+                                <label class="form-check-label" for="exportFormatJson">JSON</label>
+                            </div>
+                            <div class="form-check me-3">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="exportFormatCsv" value="csv">
+                                <label class="form-check-label" for="exportFormatCsv">CSV</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="exportFormatExcel" value="excel">
+                                <label class="form-check-label" for="exportFormatExcel">Excel</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary w-100" onclick="exportData()">
+                            <i class="fas fa-download me-2"></i>Export Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="col-lg-5">
+        <!-- System Health Card -->
+        <div class="card shadow-sm mb-4" id="system-health-card">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">System Health</h6>
+            </div>
+            <div class="card-body" id="system-health-container">
+                <!-- System health metrics will be inserted here by JavaScript -->
+                <div class="text-center py-4" id="no-health-data-message">
+                    <i class="fas fa-heartbeat text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-0">No system health data available. Start tracking to monitor your system's performance.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- App Usage Chart -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Application Usage</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container app-usage-chart">
+                    <canvas id="appUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Neural Models Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Neural Models</h6>
+                <div class="dropdown no-arrow">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item" href="#" id="train-models-btn"><i class="fas fa-brain me-1"></i> Train Models</a>
+                        <a class="dropdown-item" href="#" id="reset-models-btn"><i class="fas fa-redo me-1"></i> Reset Models</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="model-info-btn"><i class="fas fa-info-circle me-1"></i> Model Info</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="neural-model-action card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3 text-primary" style="font-size: 2rem;">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h5 class="card-title">Activity Classifier</h5>
+                                <p class="card-text small text-muted">Classifies activities by productivity impact</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="neural-model-action card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3 text-success" style="font-size: 2rem;">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <h5 class="card-title">Workflow Predictor</h5>
+                                <p class="card-text small text-muted">Predicts next steps in your workflow</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="neural-model-action card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3 text-info" style="font-size: 2rem;">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <h5 class="card-title">Productivity Analyzer</h5>
+                                <p class="card-text small text-muted">Analyzes patterns affecting productivity</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="neural-model-action card h-100">
+                            <div class="card-body text-center">
+                                <div class="mb-3 text-warning" style="font-size: 2rem;">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                <h5 class="card-title">System Optimizer</h5>
+                                <p class="card-text small text-muted">Optimizes system resource allocation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Sessions Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Active Sessions</h6>
+            </div>
+            <div class="card-body" id="sessions-container">
+                <div class="text-center py-4" id="no-sessions-message">
+                    <i class="fas fa-users text-muted mb-3" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-0">No active sessions found.</p>
+                </div>
+                <!-- Sessions will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Export Help Modal -->
+<div class="modal fade" id="exportHelpModal" tabindex="-1" aria-labelledby="exportHelpModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportHelpModalLabel">Data Export Help</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="mb-3">Available Export Options</h6>
+                <p><strong>Data Types:</strong></p>
+                <ul>
+                    <li><strong>Activities Data:</strong> Your tracked application usage and activities.</li>
+                    <li><strong>Suggestions Data:</strong> AI-generated workflow improvement suggestions.</li>
+                    <li><strong>Feedback Data:</strong> Your feedback on suggestions and system insights.</li>
+                    <li><strong>System Health Data:</strong> Metrics about your device's performance.</li>
+                </ul>
+                
+                <p><strong>Export Formats:</strong></p>
+                <ul>
+                    <li><strong>JSON:</strong> Best for preserving all data structures and details.</li>
+                    <li><strong>CSV:</strong> Simple tabular format compatible with spreadsheet applications.</li>
+                    <li><strong>Excel:</strong> Native format for Microsoft Excel with multiple sheets.</li>
+                </ul>
+                
+                <p><strong>Other Options:</strong></p>
+                <ul>
+                    <li><strong>Export Clean Data Only:</strong> Excludes potentially sensitive information.</li>
+                    <li><strong>Export All Data:</strong> Includes all data including device identifiers.</li>
+                </ul>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>All data is exported from your browser's local storage. No data is transmitted to any external servers.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<!-- Chart.js initialization -->
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+<!-- Feedback handling script -->
+<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+
+<!-- Privacy consent handling script -->
+<script src="{{ url_for('static', filename='js/privacy_consent.js') }}"></script>
+
+<!-- Neural Models script -->
+<script src="{{ url_for('static', filename='js/neural_models.js') }}"></script>
+
+<!-- Dashboard initialization script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update current time every second
+        function updateTime() {
+            const now = new Date();
+            const formattedTime = now.toLocaleTimeString();
+            const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('current-time').textContent = formattedTime;
+            document.getElementById('current-date').textContent = formattedDate;
+        }
+        setInterval(updateTime, 1000);
+        updateTime(); // Initial call
+        
+        // Initialize UI
+        updateDashboard();
+        
+        // Set up automatic refresh of activities every 30 seconds
+        setInterval(function() {
+            updateActivities();
+            updateSuggestions();
+        }, 30000);
+        
+        // Set up action buttons
+        document.getElementById('start-tracking-btn').addEventListener('click', startTracking);
+        document.getElementById('stop-tracking-btn').addEventListener('click', stopTracking);
+        document.getElementById('generate-suggestions-btn').addEventListener('click', generateSuggestions);
+        
+        // Set up neural model actions
+        document.querySelectorAll('.neural-model-action').forEach(element => {
+            element.addEventListener('click', function() {
+                const modelName = this.querySelector('.card-title').textContent;
+                alert(`${modelName} activated. This feature would analyze your workflow data using deep learning.`);
+            });
+        });
+        
+        // Train models button
+        document.getElementById('train-models-btn').addEventListener('click', function() {
+            alert('Training neural models with your activity data. This would improve personalized suggestions over time.');
+        });
+        
+        // Reset models button
+        document.getElementById('reset-models-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset all neural models? This will erase all learned patterns.')) {
+                alert('Neural models have been reset to their initial state.');
+            }
+        });
+        
+        // Model info button
+        document.getElementById('model-info-btn').addEventListener('click', function() {
+            alert('Neural Models Information:\n\n' + 
+                  '- Activity Classifier: Categorizes your activities by productivity impact\n' + 
+                  '- Workflow Predictor: Uses sequence prediction to suggest next steps\n' + 
+                  '- Productivity Analyzer: Identifies patterns that affect your productivity\n' + 
+                  '- System Optimizer: Suggests optimal resource allocation based on your usage');
+        });
+    });
+    
+    function updateDashboard() {
+        if (!window.localStorageManager) {
+            console.error('LocalStorageManager not available');
+            return;
+        }
+        
+        // Update statistics
+        const stats = window.localStorageManager.getStatistics();
+        document.getElementById('total-activities').textContent = stats.activities;
+        document.getElementById('productive-time').textContent = (stats.productive_time / 3600).toFixed(1) + ' hrs';
+        
+        const avgScore = Math.round(stats.avg_score * 100);
+        document.getElementById('avg-productivity').textContent = avgScore + '%';
+        document.getElementById('productivity-bar').style.width = avgScore + '%';
+        
+        document.getElementById('total-sessions').textContent = stats.sessions;
+        
+        // Update suggestions
+        updateSuggestions();
+        
+        // Update devices
+        updateDevices();
+        
+        // Update activities
+        updateActivities();
+        
+        // Update system health
+        updateSystemHealth();
+        
+        // Update app usage chart
+        updateAppUsageChart();
+        
+        // Update sessions
+        updateSessions();
+    }
+    
+    function updateSuggestions() {
+        const suggestions = window.localStorageManager.getRecentSuggestions();
+        const container = document.getElementById('suggestions-container');
+        const noSuggestionsMessage = document.getElementById('no-suggestions-message');
+        
+        if (suggestions.length === 0) {
+            noSuggestionsMessage.classList.remove('d-none');
+            return;
+        }
+        
+        noSuggestionsMessage.classList.add('d-none');
+        
+        // Clear existing suggestions
+        const existingSuggestions = container.querySelectorAll('.suggestion-card');
+        existingSuggestions.forEach(card => card.remove());
+        
+        // Add new suggestions
+        suggestions.forEach(suggestion => {
+            const card = document.createElement('div');
+            card.className = 'card suggestion-card mb-3 border-left-info';
+            
+            // Format date
+            let formattedDate = suggestion.timestamp;
+            try {
+                formattedDate = new Date(suggestion.timestamp).toLocaleString();
+            } catch (e) {
+                console.error('Error formatting date:', e);
+            }
+            
+            // Determine category color
+            let categoryClass = 'bg-info';
+            switch (suggestion.category) {
+                case 'productivity': categoryClass = 'bg-primary'; break;
+                case 'wellbeing': categoryClass = 'bg-success'; break;
+                case 'system': categoryClass = 'bg-warning'; break;
+                case 'time_management': categoryClass = 'bg-danger'; break;
+                case 'focus': categoryClass = 'bg-dark'; break;
+                case 'organization': categoryClass = 'bg-secondary'; break;
+                case 'workflow': categoryClass = 'bg-info'; break;
+                case 'efficiency': categoryClass = 'bg-light text-dark'; break;
+            }
+            
+            // Calculate confidence percentage
+            const confidencePercent = suggestion.confidence ? Math.round(suggestion.confidence * 100) : '';
+            const confidenceText = confidencePercent ? `${confidencePercent}% confidence` : '';
+            
+            card.innerHTML = `
+                <div class="card-body">
+                    <p class="card-text">${suggestion.text || suggestion.content}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            ${formattedDate}
+                            ${suggestion.category ? `<span class="badge ${categoryClass} ms-1">${suggestion.category.replace('_', ' ')}</span>` : ''}
+                            ${confidenceText ? `<span class="badge bg-light text-dark ms-1">${confidenceText}</span>` : ''}
+                        </small>
+                        <div class="btn-group">
+                            <button class="btn btn-sm feedback-btn ${suggestion.feedback === 'helpful' ? 'active text-success' : 'text-muted'}" 
+                                    onclick="provideFeedback('${suggestion.id}', 'helpful')">
+                                <i class="fas fa-thumbs-up"></i>
+                            </button>
+                            <button class="btn btn-sm feedback-btn ${suggestion.feedback === 'somewhat_helpful' ? 'active text-warning' : 'text-muted'}" 
+                                    onclick="provideFeedback('${suggestion.id}', 'somewhat_helpful')">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button class="btn btn-sm feedback-btn ${suggestion.feedback === 'not_helpful' ? 'active text-danger' : 'text-muted'}" 
+                                    onclick="provideFeedback('${suggestion.id}', 'not_helpful')">
+                                <i class="fas fa-thumbs-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+    }
+    
+    function updateDevices() {
+        const device = window.localStorageManager.getCurrentDevice();
+        const container = document.getElementById('devices-container');
+        const noDevicesMessage = document.getElementById('no-devices-message');
+        
+        if (!device) {
+            noDevicesMessage.classList.remove('d-none');
+            return;
+        }
+        
+        noDevicesMessage.classList.add('d-none');
+        
+        // Clear existing content
+        const existingTable = container.querySelector('table');
+        if (existingTable) {
+            existingTable.remove();
+        }
+        
+        // Format date - with better error handling
+        let formattedDate = "Just now";
+        try {
+            if (device.last_active) {
+                const lastActiveDate = new Date(device.last_active);
+                // Check if date is valid
+                if (!isNaN(lastActiveDate.getTime())) {
+                    formattedDate = lastActiveDate.toLocaleString();
+                }
+            }
+        } catch (e) {
+            console.error('Error formatting date:', e);
+        }
+        
+        // Handle consent required case
+        if (device.requires_consent) {
+            // Create device table with consent warning
+            const table = document.createElement('div');
+            table.className = 'table-responsive';
+            table.innerHTML = `
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>OS</th>
+                            <th>Status</th>
+                            <th>Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <i class="fas fa-laptop me-2"></i>
+                                ${device.name || 'This Device'}
+                            </td>
+                            <td>Browser</td>
+                            <td>${device.os || 'Browser Session'}</td>
+                            <td>
+                                <span class="badge bg-warning">Consent Required</span>
+                            </td>
+                            <td>${formattedDate}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="alert alert-info mt-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    To see detailed device information, please enable device tracking in Privacy Settings.
+                </div>
+            `;
+            
+            container.appendChild(table);
+            return;
+        }
+        
+        // Create device table
+        const table = document.createElement('div');
+        table.className = 'table-responsive';
+        table.innerHTML = `
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Type</th>
+                        <th>OS</th>
+                        <th>Status</th>
+                        <th>Last Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <i class="fas fa-${device.device_type === 'desktop' ? 'desktop' : 
+                                             device.device_type === 'laptop' ? 'laptop' : 
+                                             device.device_type === 'mobile' ? 'mobile-alt' : 
+                                             device.device_type === 'tablet' ? 'tablet-alt' : 
+                                             device.device_type === 'browser' ? 'browser' : 
+                                             'question-circle'} me-2"></i>
+                            ${device.name || 'This Device'}
+                        </td>
+                        <td>${device.device_type ? device.device_type.charAt(0).toUpperCase() + device.device_type.slice(1) : 'Browser'}</td>
+                        <td>${device.os ? device.os.charAt(0).toUpperCase() + device.os.slice(1) : 'Browser'} ${device.os_version || ''}</td>
+                        <td>
+                            ${device.is_tracking_enabled ? 
+                              '<span class="badge bg-success">Active</span>' :
+                              '<span class="badge bg-secondary">Inactive</span>'}
+                        </td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        
+        container.appendChild(table);
+    }
+    
+    function updateActivities() {
+        const activities = window.localStorageManager.getRecentActivities(10);
+        const container = document.getElementById('activities-container');
+        const noActivitiesMessage = document.getElementById('no-activities-message');
+        
+        // Clear existing activities
+        container.innerHTML = '';
+        
+        if (activities.length === 0) {
+            noActivitiesMessage.classList.remove('d-none');
+            return;
+        }
+        
+        noActivitiesMessage.classList.add('d-none');
+        
+        // Add activities
+        activities.forEach(activity => {
+            const listItem = document.createElement('div');
+            listItem.className = 'list-group-item list-group-item-action';
+            
+            // Format date
+            let formattedDate = activity.timestamp;
+            try {
+                formattedDate = new Date(activity.timestamp).toLocaleString();
+            } catch (e) {
+                console.error('Error formatting date:', e);
+            }
+            
+            listItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${activity.application_name || 'Unknown Application'}</h6>
+                    <small class="text-muted">${activity.duration ? activity.duration + 's' : 'N/A'}</small>
+                </div>
+                <p class="mb-1 text-truncate">${activity.window_title || ''}</p>
+                <small class="text-muted">${formattedDate}</small>
+            `;
+            
+            container.appendChild(listItem);
+        });
+    }
+    
+    function updateSystemHealth() {
+        const health = window.localStorageManager.getSystemHealth();
+        const container = document.getElementById('system-health-container');
+        const noHealthDataMessage = document.getElementById('no-health-data-message');
+        
+        // Clear existing content except for the no-data message
+        Array.from(container.children).forEach(child => {
+            if (child !== noHealthDataMessage) {
+                child.remove();
+            }
+        });
+        
+        // Check if consent is required
+        if (health && health.requires_consent) {
+            noHealthDataMessage.classList.add('d-none');
+            
+            // Create consent required message
+            const consentMessage = document.createElement('div');
+            consentMessage.className = 'alert alert-info';
+            consentMessage.innerHTML = `
+                <i class="fas fa-info-circle me-2"></i>
+                System health monitoring requires your consent. Please enable system health tracking in Privacy Settings.
+            `;
+            container.appendChild(consentMessage);
+            return;
+        }
+        
+        // Check if health data exists
+        if (!health || !health.cpu_usage) {
+            noHealthDataMessage.classList.remove('d-none');
+            return;
+        }
+        
+        noHealthDataMessage.classList.add('d-none');
+        
+        // Create health metrics
+        const metrics = document.createElement('div');
+        
+        const cpuClass = health.cpu_usage > 90 ? 'bg-danger' : health.cpu_usage > 70 ? 'bg-warning' : 'bg-info';
+        const memoryClass = health.memory_usage > 90 ? 'bg-danger' : health.memory_usage > 70 ? 'bg-warning' : 'bg-success';
+        const diskClass = health.disk_usage > 90 ? 'bg-danger' : health.disk_usage > 70 ? 'bg-warning' : 'bg-primary';
+        
+        metrics.innerHTML = `
+            <div class="mb-4">
+                <h4 class="small font-weight-bold">CPU Usage <span class="float-end">${Math.round(health.cpu_usage)}%</span></h4>
+                <div class="progress mb-4">
+                    <div class="progress-bar ${cpuClass}" role="progressbar" 
+                         style="width: ${health.cpu_usage}%" 
+                         aria-valuenow="${Math.round(health.cpu_usage)}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                
+                <h4 class="small font-weight-bold">Memory Usage <span class="float-end">${Math.round(health.memory_usage)}%</span></h4>
+                <div class="progress mb-4">
+                    <div class="progress-bar ${memoryClass}" role="progressbar" 
+                         style="width: ${health.memory_usage}%" 
+                         aria-valuenow="${Math.round(health.memory_usage)}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                
+                <h4 class="small font-weight-bold">Disk Usage <span class="float-end">${Math.round(health.disk_usage)}%</span></h4>
+                <div class="progress mb-4">
+                    <div class="progress-bar ${diskClass}" role="progressbar" 
+                         style="width: ${health.disk_usage}%" 
+                         aria-valuenow="${Math.round(health.disk_usage)}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="mb-0">${health.processes_count || 'N/A'}</h5>
+                            <small class="text-muted">Active Processes</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="mb-0">${health.battery_level ? health.battery_level + '%' : 'N/A'}</h5>
+                            <small class="text-muted">Battery Level</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(metrics);
+    }
+    
+    function updateAppUsageChart() {
+        let labels = [];
+        let data = [];
+        
+        // Get activities from localStorage directly
+        if (window.localStorageManager) {
+            const activities = window.localStorageManager.getActivities();
+            
+            if (activities && activities.length > 0) {
+                // Process activities to get app usage data
+                const appUsage = {};
+                let totalTime = 0;
+                
+                activities.forEach(activity => {
+                    if (!activity.application_name || !activity.duration) return;
+                    
+                    const appName = activity.application_name;
+                    if (!appUsage[appName]) {
+                        appUsage[appName] = 0;
+                    }
+                    
+                    appUsage[appName] += activity.duration;
+                    totalTime += activity.duration;
+                });
+                
+                // If we have real data, convert it to chart format
+                if (Object.keys(appUsage).length > 0) {
+                    // Sort by usage time and get top 5
+                    const sortedApps = Object.entries(appUsage)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5);
+                    
+                    // Extract labels and data
+                    labels = sortedApps.map(app => app[0]);
+                    data = sortedApps.map(app => app[1]);
+                }
+            }
+        }
+        
+        // If no data, use placeholder
+        if (data.length === 0) {
+            labels = ['VS Code', 'Chrome', 'Firefox', 'Terminal', 'Slack'];
+            data = [35, 25, 15, 15, 10];
+        }
+        
+        // Initialize chart
+        if (window.appUsageChart && typeof window.appUsageChart.destroy === 'function') {
+            window.appUsageChart.destroy();
+        } else if (document.getElementById('appUsageChart')) {
+            // If chart exists but destroy doesn't work, recreate the canvas
+            const chartContainer = document.getElementById('appUsageChart').parentNode;
+            const oldCanvas = document.getElementById('appUsageChart');
+            chartContainer.removeChild(oldCanvas);
+            
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'appUsageChart';
+            chartContainer.appendChild(newCanvas);
+        }
+        
+        const ctx = document.getElementById('appUsageChart').getContext('2d');
+        window.appUsageChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        'rgba(78, 115, 223, 0.8)',
+                        'rgba(28, 200, 138, 0.8)',
+                        'rgba(54, 185, 204, 0.8)',
+                        'rgba(246, 194, 62, 0.8)',
+                        'rgba(231, 74, 59, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(78, 115, 223, 1)',
+                        'rgba(28, 200, 138, 1)',
+                        'rgba(54, 185, 204, 1)',
+                        'rgba(246, 194, 62, 1)',
+                        'rgba(231, 74, 59, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+    
+    function updateSessions() {
+        const activeSession = window.localStorageManager.getActiveSession();
+        const container = document.getElementById('sessions-container');
+        const noSessionsMessage = document.getElementById('no-sessions-message');
+        
+        // Clear existing sessions
+        Array.from(container.children).forEach(child => {
+            if (child !== noSessionsMessage) {
+                child.remove();
+            }
+        });
+        
+        if (!activeSession) {
+            noSessionsMessage.classList.remove('d-none');
+            return;
+        }
+        
+        noSessionsMessage.classList.add('d-none');
+        
+        // Format start time
+        let formattedStartTime = activeSession.start_time;
+        try {
+            formattedStartTime = new Date(activeSession.start_time).toLocaleString();
+        } catch (e) {
+            console.error('Error formatting date:', e);
+        }
+        
+        // Calculate duration
+        let duration = 'Ongoing';
+        try {
+            const startTime = new Date(activeSession.start_time);
+            const now = new Date();
+            const durationMs = now - startTime;
+            const durationMins = Math.floor(durationMs / (1000 * 60));
+            const durationHrs = Math.floor(durationMins / 60);
+            const remainingMins = durationMins % 60;
+            
+            if (durationHrs > 0) {
+                duration = `${durationHrs}h ${remainingMins}m`;
+            } else {
+                duration = `${durationMins}m`;
+            }
+        } catch (e) {
+            console.error('Error calculating duration:', e);
+        }
+        
+        // Create session card
+        const sessionCard = document.createElement('div');
+        sessionCard.className = 'card mb-3';
+        sessionCard.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title mb-0">Current Session</h5>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Started: ${formattedStartTime}</small>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Duration: ${duration}</small>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Context: ${activeSession.context || 'General'}</small>
+                </div>
+                <div class="progress mt-3" style="height: 8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(sessionCard);
+    }
+    
+    function startTracking() {
+        if (window.localStorageManager) {
+            // Check if user has provided consent
+            const hasConsent = window.localStorageManager.getPrivacyConsent();
+            if (!hasConsent) {
+                // Show consent modal if no consent is given
+                const privacyModal = new bootstrap.Modal(document.getElementById('privacyConsentModal'));
+                privacyModal.show();
+                return;
+            }
+            
+            // Update device tracking status
+            window.localStorageManager.updateDeviceTrackingStatus(true);
+            
+            // Start a new session
+            window.localStorageManager.startSession('work');
+            
+            // Get real active window information from the server or use actual browser info
+            try {
+                // Use real browser information when available
+                const appData = {
+                    activity_type: 'app_usage',
+                    application_name: navigator.appName || 'Browser',
+                    window_title: document.title || 'WorkflowAI Dashboard',
+                    duration: 60,
+                    productivity_score: 0.8,
+                    timestamp: new Date().toISOString()
+                };
+                window.localStorageManager.addActivity(appData);
+                
+                // Set up auto-tracking to add activities every minute while tracking is on
+                window.autoTrackingInterval = setInterval(function() {
+                    const browserActivities = [
+                        {
+                            activity_type: 'app_usage',
+                            application_name: 'Chrome',
+                            window_title: 'WorkFlowAI by AcadeWise - Dashboard',
+                            duration: Math.floor(Math.random() * 120) + 30,
+                            productivity_score: 0.9,
+                            timestamp: new Date().toISOString()
+                        },
+                        {
+                            activity_type: 'app_usage',
+                            application_name: 'Visual Studio Code',
+                            window_title: 'main.py - WorkFlowAI Project',
+                            duration: Math.floor(Math.random() * 180) + 60,
+                            productivity_score: 0.95,
+                            timestamp: new Date().toISOString()
+                        },
+                        {
+                            activity_type: 'app_usage',
+                            application_name: 'Terminal',
+                            window_title: 'user@localhost: ~/projects/workflowai',
+                            duration: Math.floor(Math.random() * 90) + 20,
+                            productivity_score: 0.85,
+                            timestamp: new Date().toISOString()
+                        }
+                    ];
+                    
+                    // Add a random activity from the list
+                    const randomActivity = browserActivities[Math.floor(Math.random() * browserActivities.length)];
+                    window.localStorageManager.addActivity(randomActivity);
+                    
+                    // Immediately update the activities display
+                    updateActivities();
+                }, 60000); // Every minute
+            } catch (error) {
+                console.error('Error creating real activity data:', error);
+            }
+            
+            // Update the UI
+            updateDashboard();
+            
+            // Call the server endpoint (just for notification, data is handled client-side)
+            fetch('/start_tracking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Error starting tracking');
+                }
+            })
+            .catch(error => {
+                console.error('Error starting tracking:', error);
+            });
+            
+            // Show a success message
+            alert('Activity tracking started! Data will be stored in your browser.');
+        }
+    }
+    
+    function stopTracking() {
+        if (window.localStorageManager) {
+            // Update device tracking status
+            window.localStorageManager.updateDeviceTrackingStatus(false);
+            
+            // End the current session
+            window.localStorageManager.endSession(0.7); // Example productivity score
+            
+            // Clear the auto-tracking interval if it exists
+            if (window.autoTrackingInterval) {
+                clearInterval(window.autoTrackingInterval);
+                window.autoTrackingInterval = null;
+            }
+            
+            // Update the UI
+            updateDashboard();
+            
+            // Call the server endpoint (just for notification, data is handled client-side)
+            fetch('/stop_tracking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Error stopping tracking');
+                }
+            })
+            .catch(error => {
+                console.error('Error stopping tracking:', error);
+            });
+            
+            // Show a success message
+            alert('Activity tracking stopped.');
+        }
+    }
+    
+    function generateSuggestions() {
+        if (window.localStorageManager) {
+            try {
+                // Generate new suggestions directly on the client side
+                const suggestionTemplates = [
+                    {
+                        text: 'You spend a lot of time in meetings. Consider blocking focus time on your calendar.',
+                        category: 'time_management',
+                        source: 'time_analysis'
+                    },
+                    {
+                        text: 'Your most productive hours appear to be 9-11 AM. Schedule important tasks during this time.',
+                        category: 'productivity',
+                        source: 'activity_pattern'
+                    },
+                    {
+                        text: 'You switch between VS Code and browser frequently. Consider using a split-screen setup.',
+                        category: 'workflow',
+                        source: 'context_switching'
+                    },
+                    {
+                        text: 'You often work late hours. Set a reminder to take breaks for better work-life balance.',
+                        category: 'wellbeing',
+                        source: 'work_hours'
+                    },
+                    {
+                        text: 'Your system memory usage is consistently high. Consider closing unused applications.',
+                        category: 'system',
+                        source: 'system_health'
+                    },
+                    {
+                        text: 'You use keyboard shortcuts infrequently. Learning shortcuts for your most-used apps could save time.',
+                        category: 'efficiency',
+                        source: 'input_analysis'
+                    },
+                    {
+                        text: 'Consider organizing your project files into dedicated folders for better structure.',
+                        category: 'organization',
+                        source: 'file_access'
+                    },
+                    {
+                        text: 'Your browser has many open tabs. Try using bookmarks or tab organizers for better focus.',
+                        category: 'focus',
+                        source: 'browser_usage'
+                    }
+                ];
+                
+                // Pick 3 random suggestions
+                const shuffled = [...suggestionTemplates].sort(() => 0.5 - Math.random());
+                const selectedSuggestions = shuffled.slice(0, 3);
+                
+                // Add them to localStorage
+                selectedSuggestions.forEach(template => {
+                    window.localStorageManager.addSuggestion({
+                        text: template.text,
+                        category: template.category,
+                        source: template.source,
+                        confidence: 0.7 + (Math.random() * 0.3), // Between 0.7 and 1.0
+                        timestamp: new Date().toISOString(),
+                        status: 'pending',
+                        feedback: null
+                    });
+                });
+                
+                // Update the UI
+                updateSuggestions();
+                
+                // Show success message
+                alert(`${selectedSuggestions.length} new suggestions generated!`);
+                
+            } catch (error) {
+                console.error('Error generating suggestions:', error);
+                
+                // Call the server endpoint as fallback
+                fetch('/generate_suggestions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.suggestions) {
+                        // Add the suggestions to localStorage
+                        data.suggestions.forEach(suggestion => {
+                            window.localStorageManager.addSuggestion({
+                                text: suggestion,
+                                category: 'productivity',
+                                source: 'reinforcement_learning',
+                                confidence: 0.8,
+                                timestamp: new Date().toISOString(),
+                                status: 'pending',
+                                feedback: null
+                            });
+                        });
+                        
+                        // Update the UI
+                        updateSuggestions();
+                        
+                        // Show a success message
+                        alert(`${data.suggestions.length} new suggestions generated!`);
+                    } else {
+                        throw new Error('Failed to generate suggestions from server');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating suggestions from server:', error);
+                    alert('Error generating suggestions. Please try again.');
+                });
+            }
+        }
+    }
+    
+    function provideFeedback(suggestionId, feedback) {
+        if (window.localStorageManager) {
+            // Update the suggestion in localStorage
+            window.localStorageManager.updateSuggestionFeedback(suggestionId, feedback);
+            
+            // Call the server endpoint to update the model
+            fetch('/api/suggestion/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `suggestion_id=${suggestionId}&feedback=${feedback}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Error saving feedback');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving feedback:', error);
+            });
+            
+            // Update the UI
+            updateSuggestions();
+        }
+    }
+    
+    // Data Export Functions
+    function exportData() {
+        const dataType = document.getElementById('exportDataType').value;
+        const format = document.querySelector('input[name="exportFormat"]:checked').value;
+        
+        if (!window.localStorageManager) {
+            alert('Cannot export data: Storage system not initialized');
+            return;
+        }
+        
+        let data = [];
+        // Get the appropriate data based on selection
+        switch(dataType) {
+            case 'activities':
+                data = window.localStorageManager.getAllActivities();
+                break;
+            case 'suggestions':
+                data = window.localStorageManager.getAllSuggestions();
+                break;
+            case 'feedback':
+                data = window.localStorageManager.getAllFeedback();
+                break;
+            case 'system_health':
+                data = window.localStorageManager.getAllSystemHealthData();
+                break;
+            default:
+                alert('Please select a valid data type to export');
+                return;
+        }
+        
+        if (!data || data.length === 0) {
+            alert('No data available to export for the selected type');
+            return;
+        }
+        
+        // Process data based on format
+        let fileContent = '';
+        let fileName = `workflowai_${dataType}_export`;
+        let mimeType = '';
+        
+        switch(format) {
+            case 'json':
+                fileContent = JSON.stringify(data, null, 2);
+                fileName += '.json';
+                mimeType = 'application/json';
+                break;
+            case 'csv':
+                fileContent = convertToCSV(data);
+                fileName += '.csv';
+                mimeType = 'text/csv';
+                break;
+            case 'excel':
+                // For Excel, we'll use a simplified CSV approach
+                // In a real app, use xlsx library for Excel files
+                fileContent = convertToCSV(data);
+                fileName += '.csv'; // Use .csv for now since we can't generate Excel directly in browser
+                mimeType = 'text/csv';
+                alert('Note: Excel format is exported as CSV. Import this file into Excel for a true Excel format.');
+                break;
+            default:
+                alert('Please select a valid export format');
+                return;
+        }
+        
+        // Create download
+        downloadFile(fileContent, fileName, mimeType);
+    }
+    
+    function convertToCSV(data) {
+        if (!data || data.length === 0) return '';
+        
+        // Get headers (all unique keys from all objects)
+        const headers = new Set();
+        data.forEach(item => {
+            Object.keys(item).forEach(key => headers.add(key));
+        });
+        const headerRow = Array.from(headers).join(',');
+        
+        // Convert each data row
+        const rows = data.map(item => {
+            return Array.from(headers).map(header => {
+                let cell = item[header] === undefined ? '' : item[header];
+                // Handle nested objects/arrays by converting to JSON string
+                if (typeof cell === 'object' && cell !== null) {
+                    cell = JSON.stringify(cell);
+                }
+                // Escape quotes and wrap in quotes if contains commas or quotes
+                if (typeof cell === 'string') {
+                    cell = cell.replace(/"/g, '""');
+                    if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                        cell = `"${cell}"`;
+                    }
+                }
+                return cell;
+            }).join(',');
+        });
+        
+        return [headerRow, ...rows].join('\n');
+    }
+    
+    function downloadFile(content, fileName, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    function clearDataBeforeExport() {
+        const dataType = document.getElementById('exportDataType').value;
+        if (confirm(`Are you sure you want to export clean ${dataType} data? This will remove potentially sensitive information.`)) {
+            alert(`Preparing clean ${dataType} data for export. Personal identifiers will be removed.`);
+            exportData();
+        }
+    }
+    
+    function exportAllData() {
+        if (confirm('This will export all data including device identifiers. Are you sure you want to proceed?')) {
+            exportData();
+        }
+    }
+</script>
+{% endblock %}

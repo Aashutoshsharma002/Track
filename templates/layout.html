@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" id="html-element">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkFlowAI by AcadeWise</title>
+    <!-- Bootstrap CSS from Replit CDN -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" id="theme-css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    <!-- Bootstrap JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js" defer></script>
+    <!-- Local Storage Manager -->
+    <script src="{{ url_for('static', filename='js/local_storage.js') }}" defer></script>
+    <!-- TensorFlow Neural Models -->
+    <script src="{{ url_for('static', filename='js/neural_models.js') }}" defer></script>
+    <!-- Feedback System -->
+    <script src="{{ url_for('static', filename='js/feedback.js') }}" defer></script>
+    <!-- Charts and Visualizations -->
+    <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-robot me-2"></i>WorkFlowAI by AcadeWise
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('index') %}active{% endif %}" 
+                           href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}" 
+                           href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('settings') %}active{% endif %}" 
+                           href="{{ url_for('settings') }}">Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <div class="theme-toggle ms-3 d-flex align-items-center">
+                            <i class="fas fa-sun text-warning me-2" id="theme-icon-light"></i>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="theme-toggle" checked>
+                            </div>
+                            <i class="fas fa-moon text-primary ms-2" id="theme-icon-dark"></i>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category else 'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>WorkFlowAI by AcadeWise</h5>
+                    <p>Powered by reinforcement learning to help optimize your workflow.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; {{ current_year }} WorkFlowAI by AcadeWise. All rights reserved. <span class="text-muted small">({{ timezone }})</span></p>
+                    <p>
+                        <a href="{{ url_for('privacy_policy') }}" class="text-light text-decoration-none me-3">Privacy Policy</a>
+                        <a href="{{ url_for('terms_of_service') }}" class="text-light text-decoration-none">Terms of Service</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Theme Toggle JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the theme toggle element
+            const themeToggle = document.getElementById('theme-toggle');
+            const htmlElement = document.getElementById('html-element');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            
+            // Initialize theme from localStorage
+            const initializeTheme = function() {
+                let theme = 'dark'; // Default
+                
+                // Try to get theme from localStorage manager
+                if (window.localStorageManager) {
+                    theme = window.localStorageManager.getTheme();
+                } else if (localStorage.getItem('theme')) {
+                    theme = localStorage.getItem('theme');
+                }
+                
+                // Apply theme to page
+                if (theme === 'light') {
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                    themeToggle.checked = false;
+                    themeIconLight.classList.add('active');
+                    themeIconDark.classList.remove('active');
+                } else {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    themeToggle.checked = true;
+                    themeIconLight.classList.remove('active');
+                    themeIconDark.classList.add('active');
+                }
+            };
+            
+            // Call theme initialization
+            initializeTheme();
+            
+            // Add event listener for theme toggle
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    // Dark theme
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    themeIconLight.classList.remove('active');
+                    themeIconDark.classList.add('active');
+                    
+                    // Update in localStorage manager (if available)
+                    if (window.localStorageManager) {
+                        window.localStorageManager.updateTheme('dark');
+                    } else {
+                        localStorage.setItem('theme', 'dark');
+                    }
+                } else {
+                    // Light theme
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                    themeIconLight.classList.add('active');
+                    themeIconDark.classList.remove('active');
+                    
+                    // Update in localStorage manager (if available)
+                    if (window.localStorageManager) {
+                        window.localStorageManager.updateTheme('light');
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                    }
+                }
+            });
+        });
+    </script>
+    <!-- Privacy Consent Modal -->
+    <div class="modal fade" id="privacyConsentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="privacyConsentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="privacyConsentModalLabel">Data Privacy and Consent</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Your Data Privacy Is Our Priority</h6>
+                        <p>WorkFlowAI by AcadeWise is designed with privacy as a core principle. Here's what you need to know:</p>
+                        <ul>
+                            <li><strong>Local Storage Only:</strong> All your data is stored exclusively in your browser using localStorage. No information is sent to or stored on our servers.</li>
+                            <li><strong>No Data Sharing:</strong> Your activity data, usage patterns, and preferences remain on your device and are never shared with third parties.</li>
+                            <li><strong>You Control Your Data:</strong> You can delete all your data at any time from the settings page.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Permission to Track Activities</h6>
+                        <p>To provide personalized productivity recommendations, we need your permission to track:</p>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="consentApplications" checked>
+                            <label class="form-check-label" for="consentApplications">
+                                Application usage (which applications you use and for how long)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="consentWindowTitles" checked>
+                            <label class="form-check-label" for="consentWindowTitles">
+                                Window titles (names of open windows to understand context)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="consentSystemHealth" checked>
+                            <label class="form-check-label" for="consentSystemHealth">
+                                System health metrics (CPU, memory, disk usage)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="consentDeviceInfo" checked>
+                            <label class="form-check-label" for="consentDeviceInfo">
+                                Basic device information (device type, operating system)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Machine Learning Models</h6>
+                        <p>WorkFlowAI by AcadeWise uses TensorFlow.js to run machine learning models directly in your browser. These models:</p>
+                        <ul>
+                            <li>Run entirely on your device - no data is sent to cloud servers</li>
+                            <li>Learn from your usage patterns to provide personalized recommendations</li>
+                            <li>Improve over time without compromising your privacy</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="minimalConsentBtn">Use Minimal Tracking</button>
+                    <button type="button" class="btn btn-primary" id="fullConsentBtn">I Agree, Enable All Features</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    {% block scripts %}{% endblock %}
+    
+    <!-- Privacy Consent Script -->
+    <script>
+        // Show consent modal if privacy preferences aren't saved
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.localStorageManager && !window.localStorageManager.getPrivacyConsent()) {
+                const privacyModal = new bootstrap.Modal(document.getElementById('privacyConsentModal'));
+                setTimeout(function() {
+                    privacyModal.show();
+                }, 1000); // Short delay to ensure other scripts are loaded
+            }
+        });
+        
+        // Handle privacy consent buttons
+        document.getElementById('fullConsentBtn')?.addEventListener('click', function() {
+            if (window.localStorageManager) {
+                const consent = {
+                    applications: true,
+                    window_titles: true,
+                    system_health: true,
+                    device_info: true,
+                    consent_date: new Date().toISOString(),
+                    consent_version: "1.0"
+                };
+                window.localStorageManager.setPrivacyConsent(consent);
+                bootstrap.Modal.getInstance(document.getElementById('privacyConsentModal')).hide();
+            }
+        });
+        
+        document.getElementById('minimalConsentBtn')?.addEventListener('click', function() {
+            if (window.localStorageManager) {
+                const consent = {
+                    applications: document.getElementById('consentApplications').checked,
+                    window_titles: document.getElementById('consentWindowTitles').checked,
+                    system_health: document.getElementById('consentSystemHealth').checked,
+                    device_info: document.getElementById('consentDeviceInfo').checked,
+                    consent_date: new Date().toISOString(),
+                    consent_version: "1.0"
+                };
+                window.localStorageManager.setPrivacyConsent(consent);
+                bootstrap.Modal.getInstance(document.getElementById('privacyConsentModal')).hide();
+            }
+        });
+    </script>
+</body>
+</html>

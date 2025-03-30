@@ -1,0 +1,516 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .settings-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+    }
+    
+    .form-switch .form-check-input {
+        height: 1.5em;
+        width: 3em;
+    }
+    
+    .work-hours-container {
+        display: flex;
+        align-items: center;
+    }
+    
+    .work-hours-container .form-control {
+        max-width: 120px;
+    }
+    
+    .work-days-container .form-check {
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    
+    .exclusion-list textarea {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0">Settings</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Activity Tracking Settings</h6>
+            </div>
+            <div class="card-body">
+                <!-- Client-side settings form -->
+                <form id="settings-form">
+                    <div class="settings-section">
+                        <h5 class="text-primary">What to Track</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_applications" checked>
+                                    <label class="form-check-label" for="track_applications">
+                                        <strong>Track Applications</strong>
+                                        <p class="text-muted small">Monitor which applications you use and for how long</p>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_files" checked>
+                                    <label class="form-check-label" for="track_files">
+                                        <strong>Track Files</strong>
+                                        <p class="text-muted small">Monitor which files you access most frequently</p>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_browsing" checked>
+                                    <label class="form-check-label" for="track_browsing">
+                                        <strong>Track Browsing</strong>
+                                        <p class="text-muted small">Monitor which websites you visit (domain only, not specific pages)</p>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_idle_time" checked>
+                                    <label class="form-check-label" for="track_idle_time">
+                                        <strong>Track Idle Time</strong>
+                                        <p class="text-muted small">Monitor periods of inactivity</p>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_keyboard">
+                                    <label class="form-check-label" for="track_keyboard">
+                                        <strong>Track Keyboard Usage</strong>
+                                        <p class="text-muted small">Monitor keyboard usage patterns (not specific keystrokes)</p>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="track_mouse">
+                                    <label class="form-check-label" for="track_mouse">
+                                        <strong>Track Mouse Usage</strong>
+                                        <p class="text-muted small">Monitor mouse movement patterns</p>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h5 class="text-primary">Learning and Privacy</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="learning_enabled" checked>
+                                    <label class="form-check-label" for="learning_enabled">
+                                        <strong>Enable Learning</strong>
+                                        <p class="text-muted small">Allow the system to learn from your activities and improve suggestions</p>
+                                    </label>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Privacy Level</strong></label>
+                                    <select class="form-select" id="privacy_level">
+                                        <option value="minimal">Minimal Tracking (Basic data only)</option>
+                                        <option value="standard" selected>Standard Tracking (Recommended)</option>
+                                        <option value="detailed">Detailed Tracking (More personalized)</option>
+                                    </select>
+                                    <div class="form-text text-muted">Higher privacy levels collect less data but may reduce personalization.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body" style="background-color: black; color: white; padding: 10px; border-radius: 5px;">
+                                        <h6><i class="fas fa-shield-alt me-2"></i>Privacy Information</h6>
+                                        <p class="mb-0 small">All data is stored locally in your browser. Nothing is sent to an external server.</p>
+                                        <hr>
+                                        <div id="privacy-consent-settings" class="mb-3">
+                                            <h6>Consent Settings</h6>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="consentApplicationsSetting" checked>
+                                                <label class="form-check-label" for="consentApplicationsSetting">
+                                                    Track application usage
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="consentWindowTitlesSetting" checked>
+                                                <label class="form-check-label" for="consentWindowTitlesSetting">
+                                                    Track window titles
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="consentSystemHealthSetting" checked>
+                                                <label class="form-check-label" for="consentSystemHealthSetting">
+                                                    Track system health metrics
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="consentDeviceInfoSetting" checked>
+                                                <label class="form-check-label" for="consentDeviceInfoSetting">
+                                                    Track basic device information
+                                                </label>
+                                            </div>
+                                            <button type="button" id="update-consent-btn" class="btn btn-sm btn-outline-primary mt-2">
+                                                <i class="fas fa-check me-1"></i>Update Consent Settings
+                                            </button>
+                                        </div>
+                                        <hr>
+                                        <button type="button" id="clear-data-btn" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Clear All Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h5 class="text-primary">Working Hours</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Work Hours</strong></label>
+                                    <div class="work-hours-container">
+                                        <input type="time" class="form-control" id="work_hours_start" value="09:00">
+                                        <span class="mx-2">to</span>
+                                        <input type="time" class="form-control" id="work_hours_end" value="17:00">
+                                    </div>
+                                    <div class="form-text text-muted">Define your typical working hours for better analysis</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Work Days</strong></label>
+                                    <div class="work-days-container">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_0" checked>
+                                            <label class="form-check-label" for="work_day_0">Mon</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_1" checked>
+                                            <label class="form-check-label" for="work_day_1">Tue</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_2" checked>
+                                            <label class="form-check-label" for="work_day_2">Wed</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_3" checked>
+                                            <label class="form-check-label" for="work_day_3">Thu</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_4" checked>
+                                            <label class="form-check-label" for="work_day_4">Fri</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_5">
+                                            <label class="form-check-label" for="work_day_5">Sat</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="work_day_6">
+                                            <label class="form-check-label" for="work_day_6">Sun</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h5 class="text-primary">Exclusion Lists</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="mb-3 exclusion-list">
+                                    <label class="form-label"><strong>Excluded Applications</strong></label>
+                                    <textarea class="form-control" id="excluded_apps" placeholder="Enter app names separated by commas"></textarea>
+                                    <div class="form-text text-muted">Applications that won't be tracked</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3 exclusion-list">
+                                    <label class="form-label"><strong>Excluded Websites</strong></label>
+                                    <textarea class="form-control" id="excluded_websites" placeholder="Enter domains separated by commas"></textarea>
+                                    <div class="form-text text-muted">Websites that won't be tracked</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3 exclusion-list">
+                                    <label class="form-label"><strong>Excluded Directories</strong></label>
+                                    <textarea class="form-control" id="excluded_directories" placeholder="Enter paths separated by commas"></textarea>
+                                    <div class="form-text text-muted">Directories that won't be tracked</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h5 class="text-primary">Theme and Appearance</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="theme_toggle_settings" checked>
+                                    <label class="form-check-label" for="theme_toggle_settings">
+                                        <strong>Dark Mode</strong>
+                                        <p class="text-muted small">Toggle between dark and light theme</p>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Language</strong></label>
+                                    <select class="form-select" id="language_setting">
+                                        <option value="en" selected>English</option>
+                                        <option value="es">Español</option>
+                                        <option value="fr">Français</option>
+                                        <option value="de">Deutsch</option>
+                                        <option value="zh">中文</option>
+                                        <option value="ja">日本語</option>
+                                    </select>
+                                    <div class="form-text text-muted">User interface language (partial support)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" id="reset-settings-btn" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i>Reset to Defaults
+                        </button>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+        setupEventListeners();
+    });
+    
+    function loadSettings() {
+        // Load settings from localStorage
+        if (window.localStorageManager) {
+            const settings = window.localStorageManager.getSettings();
+            
+            // Tracking options
+            document.getElementById('track_applications').checked = settings.track_applications !== false;
+            document.getElementById('track_files').checked = settings.track_files !== false;
+            document.getElementById('track_browsing').checked = settings.track_browsing !== false;
+            document.getElementById('track_idle_time').checked = settings.track_idle_time !== false;
+            document.getElementById('track_keyboard').checked = settings.track_keyboard === true;
+            document.getElementById('track_mouse').checked = settings.track_mouse === true;
+            
+            // Learning and privacy
+            document.getElementById('learning_enabled').checked = settings.learning_enabled !== false;
+            
+            if (settings.privacy_level) {
+                document.getElementById('privacy_level').value = settings.privacy_level;
+            }
+            
+            // Working hours
+            if (settings.work_hours_start) {
+                document.getElementById('work_hours_start').value = settings.work_hours_start;
+            }
+            
+            if (settings.work_hours_end) {
+                document.getElementById('work_hours_end').value = settings.work_hours_end;
+            }
+            
+            // Work days
+            if (Array.isArray(settings.work_days)) {
+                // Reset all checkboxes first
+                for (let i = 0; i < 7; i++) {
+                    document.getElementById(`work_day_${i}`).checked = false;
+                }
+                
+                // Set the checked ones
+                settings.work_days.forEach(day => {
+                    const checkbox = document.getElementById(`work_day_${day}`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+            
+            // Exclusion lists
+            if (Array.isArray(settings.excluded_apps)) {
+                document.getElementById('excluded_apps').value = settings.excluded_apps.join(', ');
+            }
+            
+            if (Array.isArray(settings.excluded_websites)) {
+                document.getElementById('excluded_websites').value = settings.excluded_websites.join(', ');
+            }
+            
+            if (Array.isArray(settings.excluded_directories)) {
+                document.getElementById('excluded_directories').value = settings.excluded_directories.join(', ');
+            }
+            
+            // Theme
+            document.getElementById('theme_toggle_settings').checked = settings.theme === 'dark';
+        }
+    }
+    
+    function setupEventListeners() {
+        // Handle form submission
+        document.getElementById('settings-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            saveSettings();
+        });
+        
+        // Handle clear data button
+        document.getElementById('clear-data-btn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all stored data? This action cannot be undone.')) {
+                if (window.localStorageManager) {
+                    window.localStorageManager.clearAllData();
+                    alert('All data has been cleared successfully.');
+                }
+            }
+        });
+        
+        // Handle consent settings
+        const consentBtn = document.getElementById('update-consent-btn');
+        if (consentBtn) {
+            consentBtn.addEventListener('click', function() {
+                if (window.localStorageManager) {
+                    const consent = {
+                        applications: document.getElementById('consentApplicationsSetting').checked,
+                        window_titles: document.getElementById('consentWindowTitlesSetting').checked,
+                        system_health: document.getElementById('consentSystemHealthSetting').checked,
+                        device_info: document.getElementById('consentDeviceInfoSetting').checked,
+                        consent_date: new Date().toISOString(),
+                        consent_version: "1.0"
+                    };
+                    window.localStorageManager.setPrivacyConsent(consent);
+                    alert('Privacy consent settings have been updated.');
+                }
+            });
+        }
+        
+        // Load consent settings if available
+        if (window.localStorageManager) {
+            const consent = window.localStorageManager.getPrivacyConsent();
+            if (consent) {
+                document.getElementById('consentApplicationsSetting').checked = consent.applications === true;
+                document.getElementById('consentWindowTitlesSetting').checked = consent.window_titles === true;
+                document.getElementById('consentSystemHealthSetting').checked = consent.system_health === true;
+                document.getElementById('consentDeviceInfoSetting').checked = consent.device_info === true;
+            }
+        }
+        
+        // Handle reset settings button
+        document.getElementById('reset-settings-btn').addEventListener('click', function() {
+            if (confirm('Reset all settings to their default values?')) {
+                if (window.localStorageManager) {
+                    // Re-initialize with defaults
+                    window.localStorageManager.initialize();
+                    loadSettings();
+                    alert('Settings have been reset to defaults.');
+                }
+            }
+        });
+        
+        // Handle theme toggle in settings
+        document.getElementById('theme_toggle_settings').addEventListener('change', function() {
+            const htmlElement = document.getElementById('html-element');
+            const themeToggleNav = document.getElementById('theme-toggle');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            
+            if (this.checked) {
+                // Dark theme
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                if (themeToggleNav) themeToggleNav.checked = true;
+                if (themeIconLight) themeIconLight.classList.remove('active');
+                if (themeIconDark) themeIconDark.classList.add('active');
+                
+                if (window.localStorageManager) {
+                    window.localStorageManager.updateTheme('dark');
+                }
+            } else {
+                // Light theme
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                if (themeToggleNav) themeToggleNav.checked = false;
+                if (themeIconLight) themeIconLight.classList.add('active');
+                if (themeIconDark) themeIconDark.classList.remove('active');
+                
+                if (window.localStorageManager) {
+                    window.localStorageManager.updateTheme('light');
+                }
+            }
+        });
+    }
+    
+    function saveSettings() {
+        if (!window.localStorageManager) {
+            alert('Error: LocalStorageManager not available');
+            return;
+        }
+        
+        // Collect settings from form
+        const settings = {
+            // Tracking options
+            track_applications: document.getElementById('track_applications').checked,
+            track_files: document.getElementById('track_files').checked,
+            track_browsing: document.getElementById('track_browsing').checked,
+            track_idle_time: document.getElementById('track_idle_time').checked,
+            track_keyboard: document.getElementById('track_keyboard').checked,
+            track_mouse: document.getElementById('track_mouse').checked,
+            
+            // Learning and privacy
+            learning_enabled: document.getElementById('learning_enabled').checked,
+            privacy_level: document.getElementById('privacy_level').value,
+            
+            // Working hours
+            work_hours_start: document.getElementById('work_hours_start').value,
+            work_hours_end: document.getElementById('work_hours_end').value,
+            
+            // Work days
+            work_days: [],
+            
+            // Exclusion lists
+            excluded_apps: document.getElementById('excluded_apps').value.split(',').map(app => app.trim()).filter(app => app),
+            excluded_websites: document.getElementById('excluded_websites').value.split(',').map(site => site.trim()).filter(site => site),
+            excluded_directories: document.getElementById('excluded_directories').value.split(',').map(dir => dir.trim()).filter(dir => dir),
+            
+            // Theme
+            theme: document.getElementById('theme_toggle_settings').checked ? 'dark' : 'light'
+        };
+        
+        // Collect work days
+        for (let i = 0; i < 7; i++) {
+            if (document.getElementById(`work_day_${i}`).checked) {
+                settings.work_days.push(i);
+            }
+        }
+        
+        // Save settings to localStorage
+        window.localStorageManager.updateSettings(settings);
+        
+        // Show success message
+        alert('Settings saved successfully!');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="h2 mb-4">Terms of Service</h1>
+                    
+                    <p class="lead mb-4">By using WorkFlowAI by AcadeWise, you agree to these Terms of Service. Please read them carefully.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">1. Acceptance of Terms</h3>
+                    <p>By accessing or using WorkFlowAI, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, you may not use the service.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">2. Description of Service</h3>
+                    <p>WorkFlowAI is a productivity assistant that uses machine learning to provide personalized workflow recommendations. The service processes activity data within your browser to generate insights and suggestions.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">3. User Privacy and Data</h3>
+                    <p>WorkFlowAI operates with a strict local-first approach:</p>
+                    <ul>
+                        <li>All user data is stored exclusively in the browser's localStorage</li>
+                        <li>No user activity data is transmitted to our servers</li>
+                        <li>All data analysis happens on your device using client-side processing</li>
+                    </ul>
+                    <p>For complete details on how we handle your data, please review our <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">4. User Accounts</h3>
+                    <p>WorkFlowAI identifies users through browser local storage. No account registration is required, but this means your data is tied to the specific browser and device you use.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">5. User Conduct</h3>
+                    <p>You agree not to:</p>
+                    <ul>
+                        <li>Attempt to circumvent, disable, or interfere with the application's security features</li>
+                        <li>Use the service for any unlawful purpose or to violate any laws</li>
+                        <li>Attempt to reverse engineer or extract the source code of the application</li>
+                        <li>Use the service to knowingly transmit viruses or other harmful code</li>
+                    </ul>
+                    
+                    <h3 class="h5 mt-4 mb-3">6. Intellectual Property</h3>
+                    <p>WorkFlowAI, including its content, features, and functionality, is owned by AcadeWise and is protected by copyright, trademark, and other intellectual property laws.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">7. Disclaimer of Warranties</h3>
+                    <p>WorkFlowAI is provided "as is" without warranties of any kind, either express or implied. We do not guarantee that the service will be error-free or uninterrupted.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">8. Limitation of Liability</h3>
+                    <p>AcadeWise shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use or inability to use the service.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">9. Changes to Terms</h3>
+                    <p>We reserve the right to modify these Terms of Service at any time. Updated terms will be posted on this page. Continued use of the service constitutes acceptance of the modified terms.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">10. Governing Law</h3>
+                    <p>These Terms of Service shall be governed by and construed in accordance with the laws of the United States, without regard to its conflict of law principles.</p>
+                    
+                    <h3 class="h5 mt-4 mb-3">11. Contact Information</h3>
+                    <p>If you have any questions about these Terms of Service, please contact us at:</p>
+                    <p>Email: legal@acadewise.com</p>
+                    
+                    <p class="text-muted mt-5"><small>Last updated: March 30, 2025</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

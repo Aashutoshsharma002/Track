@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--bs-info);
+    }
+    
+    .hero-section {
+        padding: 4rem 0;
+    }
+    
+    .cta-section {
+        padding: 3rem 0;
+        background-color: rgba(13, 110, 253, 0.05);
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <h1 class="display-4 mb-3">Meet Your Personal Workflow Assistant</h1>
+    <p class="lead mb-4">
+        Learn, adapt, and optimize your daily computer activities with our AI-powered assistant
+    </p>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 gap-3">
+            <i class="fas fa-chart-line me-2"></i>View Dashboard
+        </a>
+        <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="fas fa-cog me-2"></i>Configure
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 py-5">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <h3 class="card-title">Activity Monitoring</h3>
+                <p class="card-text">
+                    Tracks your system activities including application usage, file operations, and work patterns.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="card-title">Intelligent Learning</h3>
+                <p class="card-text">
+                    Uses reinforcement learning to understand your work patterns and improve suggestions over time.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h3 class="card-title">Smart Suggestions</h3>
+                <p class="card-text">
+                    Provides personalized recommendations to help you work more efficiently.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row my-5">
+    <div class="col-md-6">
+        <h2 class="mb-4">How It Works</h2>
+        <div class="accordion" id="howItWorksAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                        <i class="fas fa-eye me-2"></i>Monitor
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        The assistant runs in the background, monitoring application usage, file operations, and system activities to understand your workflow patterns.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                        <i class="fas fa-chart-bar me-2"></i>Analyze
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Advanced algorithms analyze your activity data to identify patterns, habits, and potential areas for workflow optimization.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                        <i class="fas fa-lightbulb me-2"></i>Suggest
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Receive personalized suggestions to help optimize your workflow, increase productivity, and reduce repetitive tasks.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                        <i class="fas fa-sync me-2"></i>Improve
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#howItWorksAccordion">
+                    <div class="accordion-body">
+                        Your feedback on suggestions helps the system learn and improve through reinforcement learning, making future recommendations even more relevant.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h2 class="mb-4">Privacy First</h2>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-shield-alt me-3 text-success fs-2"></i>
+                    <h4 class="mb-0">Your Data Stays Local</h4>
+                </div>
+                <p>
+                    All activity data is stored locally on your machine. We prioritize your privacy:
+                </p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>No data sent to external servers
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>Complete control over what gets tracked
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>Granular privacy settings
+                    </li>
+                    <li class="list-group-item bg-transparent">
+                        <i class="fas fa-check-circle text-success me-2"></i>Easily delete your data at any time
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section text-center my-5">
+    <h2 class="mb-4">Ready to Optimize Your Workflow?</h2>
+    <p class="lead mb-4">
+        Start tracking your activities and get personalized suggestions to boost your productivity.
+    </p>
+    <form action="{{ url_for('start_tracking') }}" method="POST" class="d-inline">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-play me-2"></i>Start Assistant
+        </button>
+    </form>
+</div>
+{% endblock %}
